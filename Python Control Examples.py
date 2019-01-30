@@ -4,10 +4,10 @@ This application note was written to be used in conjunction with QuarchPy python
 
 ########### VERSION HISTORY ###########
 
-29/03/2018 - Andy Norrie	- Minor edits for formatting and layout
-21/03/2018 - Pedro Cruz 	- Re-written against quarchpy 1.0
-19/09/2017 - Tom Pope		- Moved to QuarchPy library
-24/04/2018 - Andy Norrie	- Updated from functional to object form
+29/03/2018 - Andy Norrie    - Minor edits for formatting and layout
+21/03/2018 - Pedro Cruz     - Re-written against quarchpy 1.0
+19/09/2017 - Tom Pope       - Moved to QuarchPy library
+24/04/2018 - Andy Norrie    - Updated from functional to object form
 
 ########### INSTRUCTIONS ###########
 
@@ -89,7 +89,7 @@ def QuarchArrayExample(device1):
     
     # If we get 'FAIL' then there is no module attached
     if "FAIL" in deviceDesc:
-        print("Error: No module on port <1>")	
+        print("Error: No module on port <1>")   
     # Otherwise we can take to the module and query its power state
     else:
         print("Check power state of module on array port 1:"),
