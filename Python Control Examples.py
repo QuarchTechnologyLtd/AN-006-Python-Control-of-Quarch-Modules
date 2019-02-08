@@ -35,7 +35,7 @@ REST:[IP address or netBIOS name]
 Telnet:[IP address or netBIOS name]
 '''
 
-moduleStr = "USB:QTL1743"
+moduleStr = "USB:QTL1999"
 #moduleStr = "SERIAL:/dev/ttyUSB1"
 #moduleStr = "SERIAL:COM4"
 #moduleStr = "REST:QTL1079-02-003"
@@ -51,10 +51,10 @@ def main(moduleStr):
     myDevice = quarchDevice(moduleStr)
 
     QuarchSimpleIdentify(myDevice)
-    #QuarchArrayExample(myDevice)
-    #QuarchHotPlugExample(myDevice)
+    QuarchArrayExample(myDevice)
+    QuarchHotPlugExample(myDevice)
     #QuarchSwitchExample(myDevice)
-    #QuarchPowerMarginingExample(myDevice)
+    QuarchPowerMarginingExample(myDevice)
 
     # Close the module before exiting the script
     myDevice.closeConnection()
