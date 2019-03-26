@@ -89,7 +89,7 @@ def QuarchArrayExample(device1):
 
     # Try to talk to the module on port 1
     print("Communicate with module on port 1")
-    devStatus = device1.sendCommand("*tst? <1>")
+    devStatus = device1.sendCommand("*idn? <1>")
     if "FAIL" in devStatus:
         print("Error: No module on port <1>")
     else:
@@ -113,7 +113,7 @@ def QuarchArrayExample(device1):
     # Now run the same commands, but no address list is required
 
     # Try to talk to the module on port 1
-    devStatus = myModule1.sendCommand("*tst?")
+    devStatus = myModule1.sendCommand("*idn?")
     if "FAIL" in devStatus:
         print("Error: No module on port <1>")
     else:
