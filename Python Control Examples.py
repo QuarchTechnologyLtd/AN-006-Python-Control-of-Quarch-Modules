@@ -20,41 +20,39 @@ This application note was written to be used in conjunction with QuarchPy python
 ####################################
 '''
 
-#Imports QuarchPy library, providing the functions needed to use Quarch modules
-from quarchpy import quarchDevice
+# '.device' provides connection and control of modules
+from quarchpy.device import *
+
 
 # Import other libraries used in the examples
 import time
 
-'''
-You can connect to a module using USB, ReST, Telnet or Serial.
-The selections below show examples you can use
-USB:[Full or partial serial number]
-Serial:[COMx or /dev/ttySx]
-REST:[IP address or netBIOS name]
-Telnet:[IP address or netBIOS name]
-'''
-
-moduleStr = "USB:QTL1999"
-#moduleStr = "SERIAL:/dev/ttyUSB1"
-#moduleStr = "SERIAL:COM4"
-#moduleStr = "REST:QTL1079-02-003"
-#moduleStr = "TELNET:194.168.0.101"
 
 
 ''' 
-Opens the connection, call the selected example function(s) and closes the connection.
-The constructor opens the connection by default.  You must always close a connection before you exit
+Simple example code, showing connection and control of almost any module
 '''
-def main(moduleStr):
+def main():
+    # Scan for quarch devices on the system
+    deviceList = scanDevices ('all')
+    
+    # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
+    # Here we use the user selection function to display the list and return the module connection string
+    # for the selected device
+    moduleStr = userSelectDevice (deviceList)
+
     # Create a device using the module connection string
     myDevice = quarchDevice(moduleStr)
 
+    '''
+    Several test functions are available, depending on the module you have chosen to work with
+    QuarchSimpleIdentify will work with any module.  Comment others in/out as needed
+    '''
     QuarchSimpleIdentify(myDevice)
-    QuarchArrayExample(myDevice)
-    QuarchHotPlugExample(myDevice)
-    #QuarchSwitchExample(myDevice)
-    QuarchPowerMarginingExample(myDevice)
+    QuarchArrayExample(myDevice)           # Example for use with an Array Controller
+    #QuarchHotPlugExample(myDevice)         # Example for use with a hot-plug/breaker module
+    #QuarchSwitchExample(myDevice)          # Example for a physical layer switch
+    #QuarchPowerMarginingExample(myDevice)  # Example for a PPM
 
     # Close the module before exiting the script
     myDevice.closeConnection()
@@ -67,7 +65,7 @@ def QuarchSimpleIdentify(device1):
     print("Running the simple identify example.\n")
     print("Module Name:"),
     print(device1.sendCommand("hello?"))
-    time.sleep(1)
+   
     # Print the module identify and version information
     print("\nModule Identity Information:\n")
     print(device1.sendCommand("*idn?"))
@@ -77,23 +75,53 @@ This function demonstrates simple control over modules that are attached via an 
 a QTL1461 or QTL1079 Array Controller, with a module attached on port 1
 '''
 def QuarchArrayExample(device1):
+
+    '''
+    First we will use simple commands to the controller.  This requires us to append the device number of the module
+    we want to speak with on the end of every command
+    '''
     # Print the controller name
-    print("Running the array identify test.\n")
-    print("Controller Name:"),
+    print("Running the array identify test.")
+    print("")
+    print("Controller Name:")
     print(device1.sendCommand("hello?"))
-    
+    print("")
+
     # Try to talk to the module on port 1
-    print("Module Name on port 1:"),
-    deviceDesc = (device1.sendCommand("hello? <1>"))
-    print (deviceDesc)
-    
-    # If we get 'FAIL' then there is no module attached
-    if "FAIL" in deviceDesc:
-        print("Error: No module on port <1>")   
-    # Otherwise we can take to the module and query its power state
+    print("Communicate with module on port 1")
+    devStatus = device1.sendCommand("*tst? <1>")
+    if "FAIL" in devStatus:
+        print("Error: No module on port <1>")
     else:
-        print("Check power state of module on array port 1:"),
+        print("Module Name on port 1:")
+        print(device1.sendCommand("hello? <1>"))
+        print("Check power state of module on array port 1:")
         print(device1.sendCommand("RUN:POWER? <1>"))
+    print("")
+
+    '''
+    Now we will use the quarchArray and subDevice classes, which allow us to
+    handle devices on the controller as if they were directly connected. 
+    This is useful as it means the same script can be used with any module, 
+    regardless of how it is attached
+    '''
+    print("Communicate with module on port 1, via array API")
+    # First we create a quarchArray from the basic quarchDevice
+    myArray = quarchArray(device1)
+    # Get the subDevice on port <1> of the array
+    myModule1 = myArray.getSubDevice(1)
+    # Now run the same commands, but no address list is required
+
+    # Try to talk to the module on port 1
+    devStatus = myModule1.sendCommand("*tst?")
+    if "FAIL" in devStatus:
+        print("Error: No module on port <1>")
+    else:
+        print("Module Name on port 1:")
+        print (myModule1.sendCommand("hello?"))
+        print("Check power state of module on array port 1:")
+        print(myModule1.sendCommand("RUN:POWER?"))
+
 
 ''' 
 This function is a simple demonstration of working with a standard hot-plug module (Drive Modules, Card Modules and Cable Modules will all work with this function)
@@ -303,4 +331,4 @@ def QuarchPowerMarginingExample(device1):
 
 
 if __name__== "__main__":
- main(moduleStr)
+ main()
