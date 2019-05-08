@@ -14,8 +14,7 @@ This application note was written to be used in conjunction with QuarchPy python
 1- Connect a Quarch module to your PC via USB, Serial or LAN
 2- Comment in one of the 'module = ' lines below, based on the USB/Serial/LAN option you are using
 3- Alter the 'module = ' line to specify the correct port/module/IP
-4- Comment in/out the test functions you wish to run in the main() function.  One example is provided for each module type
-   The default 'SimpleQuarchIdentify()' function will work for all modules
+4- Select the tests you would like to run from the prompt in the command line
 
 ####################################
 '''
@@ -26,6 +25,7 @@ from quarchpy.device import *
 
 # Import other libraries used in the examples
 import time
+import sys
 
 
 
@@ -33,7 +33,7 @@ import time
 Simple example code, showing connection and control of almost any module
 '''
 def main():
-    # Scan for quarch devices on the system
+    #Scan for quarch devices on the system
     deviceList = scanDevices ('all')
     
     # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
@@ -43,19 +43,49 @@ def main():
 
     # Create a device using the module connection string
     myDevice = quarchDevice(moduleStr)
+    #myArray = quarchArray(myDevice)
 
     '''
     Several test functions are available, depending on the module you have chosen to work with
     QuarchSimpleIdentify will work with any module.  Comment others in/out as needed
     '''
-    QuarchSimpleIdentify(myDevice)
-    QuarchArrayExample(myDevice)           # Example for use with an Array Controller
-    #QuarchHotPlugExample(myDevice)         # Example for use with a hot-plug/breaker module
-    #QuarchSwitchExample(myDevice)          # Example for a physical layer switch
-    #QuarchPowerMarginingExample(myDevice)  # Example for a PPM
+
+    displayTests()
+    selectTests(myDevice)
 
     # Close the module before exiting the script
     myDevice.closeConnection()
+
+
+def selectTests(myDevice):
+    if sys.version_info.major >= 3:
+        testSelectStr = input("Enter the tests you would like to run separated by a space for example, 1 3 4 5:")
+    else:
+        testSelectStr = raw_input("Enter the tests you would like to run separated by a space for example 1 3 4 5:")
+    try:
+        testSelectList = [int(i) for i in (testSelectStr.split())]
+    except:
+        raise ValueError("User did not enter a valid integer")
+    for i in testSelectList:
+        if i == 1:
+            QuarchSimpleIdentify(myDevice)  # 1
+        if i == 2:
+            QuarchArrayExample(myDevice)  # 2 Example for use with an Array Controller
+        if i == 3:
+            QuarchHotPlugExample(myDevice)  # 3 Example for use with a hot-plug/breaker module
+        if i == 4:
+            QuarchSwitchExample(myDevice)  # 4 Example for a physical layer switch
+        if i == 5:
+            QuarchPowerMarginingExample(myDevice)  # 5 Example for a PPM
+
+'''
+Simple function to display the lists of tests that are available in this script.
+'''
+def displayTests():
+    print("Located Tests")
+    #TODO currently hard coded but could be changed in future.
+    print("1)\tQuarchSimpleIdentify\n2)\tQuarchArrayExample\n3)\tQuarchHotPlugExample\n4)\tQuarchSwitchExample\n5)\tQuarchPowerMarginingExample\n")
+
 
 '''
 This function demonstrates a very simple module identify, that will work with any Quarch device
