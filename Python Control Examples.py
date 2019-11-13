@@ -26,35 +26,41 @@ from quarchpy.device import *
 # Import other libraries used in the examples
 import time
 import sys
-
+from quarchpy.device.quarchArray import isThisAnArrayController
 
 
 ''' 
 Simple example code, showing connection and control of almost any module
 '''
 def main():
-    #Scan for quarch devices on the system
-    deviceList = scanDevices ('all')
-    
-    # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
-    # Here we use the user selection function to display the list and return the module connection string
-    # for the selected device
-    moduleStr = userSelectDevice (deviceList)
+    while True:
 
-    # Create a device using the module connection string
-    myDevice = quarchDevice(moduleStr)
-    #myArray = quarchArray(myDevice)
+        #Scan for quarch devices on the system
+        deviceList = scanDevices ('all')
 
-    '''
-    Several test functions are available, depending on the module you have chosen to work with
-    QuarchSimpleIdentify will work with any module.  Comment others in/out as needed
-    '''
+        # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
+        # Here we use the user selection function to display the list and return the module connection string
+        # for the selected device
+        moduleStr = userSelectDevice (deviceList, nice=True)
+        if moduleStr is "quit":
+            return 0
+        # moduleStr = "USB:QTL1461-04-001"
+        # Create a device using the module connection string
+        myDevice = quarchDevice(moduleStr)
 
-    displayTests()
-    selectTests(myDevice)
+        if moduleStr.__contains__("<") and moduleStr.__contains__(">"):
+            portNumber = int(moduleStr[moduleStr.find("<") + 1: moduleStr.find(">")])
+            myDevice = quarchArray(myDevice).getSubDevice(portNumber)
 
-    # Close the module before exiting the script
-    myDevice.closeConnection()
+        '''
+        Several test functions are available, depending on the module you have chosen to work with
+        QuarchSimpleIdentify will work with any module.
+        '''
+        displayTests()
+        selectTests(myDevice)
+
+        # Close the module before exiting the script
+        myDevice.closeConnection()
 
 
 def selectTests(myDevice):
