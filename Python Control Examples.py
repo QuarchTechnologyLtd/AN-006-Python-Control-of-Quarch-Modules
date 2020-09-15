@@ -21,12 +21,11 @@ This application note was written to be used in conjunction with QuarchPy python
 
 # '.device' provides connection and control of modules
 from quarchpy.device import *
-
+from quarchpy.user_interface import user_interface
 
 # Import other libraries used in the examples
 import time
 import sys
-from quarchpy.device.quarchArray import isThisAnArrayController
 
 
 ''' 
@@ -36,15 +35,15 @@ def main():
     while True:
 
         #Scan for quarch devices on the system
-        deviceList = scanDevices ('all')
+        deviceList = scanDevices('all')
 
         # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
         # Here we use the user selection function to display the list and return the module connection string
         # for the selected device
-        moduleStr = userSelectDevice (deviceList, nice=True)
+        moduleStr = userSelectDevice(deviceList,additionalOptions = ["Rescan","All Conn Types","Quit"], nice=True)
         if moduleStr is "quit":
             return 0
-        # moduleStr = "USB:QTL1461-04-001"
+
         # Create a device using the module connection string
         myDevice = quarchDevice(moduleStr)
 
@@ -56,41 +55,30 @@ def main():
         Several test functions are available, depending on the module you have chosen to work with
         QuarchSimpleIdentify will work with any module.
         '''
-        displayTests()
         selectTests(myDevice)
 
         # Close the module before exiting the script
         myDevice.closeConnection()
 
-
 def selectTests(myDevice):
-    if sys.version_info.major >= 3:
-        testSelectStr = input("Enter the tests you would like to run separated by a space for example, 1 3 4 5:")
-    else:
-        testSelectStr = raw_input("Enter the tests you would like to run separated by a space for example 1 3 4 5:")
-    try:
-        testSelectList = [int(i) for i in (testSelectStr.split())]
-    except:
-        raise ValueError("User did not enter a valid integer")
-    for i in testSelectList:
-        if i == 1:
-            QuarchSimpleIdentify(myDevice)  # 1
-        if i == 2:
-            QuarchArrayExample(myDevice)  # 2 Example for use with an Array Controller
-        if i == 3:
-            QuarchHotPlugExample(myDevice)  # 3 Example for use with a hot-plug/breaker module
-        if i == 4:
-            QuarchSwitchExample(myDevice)  # 4 Example for a physical layer switch
-        if i == 5:
-            QuarchPowerMarginingExample(myDevice)  # 5 Example for a PPM
+    #Create a list of test that can be selected
+    listOfTests = ["QuarchSimpleIdentify", "QuarchArrayExample", "QuarchHotPlugExample", "QuarchSwitchExample", "QuarchPowerMarginingExample", "PAMTest"]
+    #Pass the list to QuarchPys listSelection function.
+    testSelectList = user_interface.listSelection(message="Enter the number for the test you would like to run",selectionList=listOfTests, nice = True, tableHeaders=["Test Name"], indexReq=True, align="l")
 
-'''
-Simple function to display the lists of tests that are available in this script.
-'''
-def displayTests():
-    print("Located Tests")
-    #TODO currently hard coded but could be changed in future.
-    print("1)\tQuarchSimpleIdentify\n2)\tQuarchArrayExample\n3)\tQuarchHotPlugExample\n4)\tQuarchSwitchExample\n5)\tQuarchPowerMarginingExample\n")
+    #Identify what test has been selected and run it
+    if testSelectList == "QuarchSimpleIdentify":
+        QuarchSimpleIdentify(myDevice)  # 1
+    elif testSelectList == "QuarchArrayExample":
+        QuarchArrayExample(myDevice)  # 2 Example for use with an Array Controller
+    elif testSelectList == "QuarchHotPlugExample":
+        QuarchHotPlugExample(myDevice)  # 3 Example for use with a hot-plug/breaker module
+    elif testSelectList == "QuarchSwitchExample":
+        QuarchSwitchExample(myDevice)  # 4 Example for a physical layer switch
+    elif testSelectList == "QuarchPowerMarginingExample":
+        QuarchPowerMarginingExample(myDevice)  # 5 Example for a PPM
+    elif testSelectList == "PAMTest":
+        PAMTest(myDevice)  # 5 Example for a PPM
 
 
 '''
@@ -105,6 +93,9 @@ def QuarchSimpleIdentify(device1):
     # Print the module identify and version information
     print("\nModule Identity Information:\n")
     print(device1.sendCommand("*idn?"))
+
+    #print("\nSending reset command:\n") # sb db testing
+    #print(device1.sendCommand("*RST"))
 
 ''' 
 This function demonstrates simple control over modules that are attached via an Array Controller.  This will require you to connect to
@@ -365,6 +356,70 @@ def QuarchPowerMarginingExample(device1):
 
     print("Test finished!")
 
+def PAMTest(device1):
+    print("Running the PAM Test example.\n")
 
+    # Prints out the ID of the attached module.
+    print("Module attached:"),
+    print(device1.sendCommand("hello?") + "\n")
+
+    # Check the state of the module and power up if necessary.
+    print("Checking the State of the Device and power up if necessary.")
+    currentState = device1.sendCommand("run:power?")
+    print("State of the Device: " + (currentState))
+
+    # If the outputs are off
+    if currentState == "OFF":
+        # Power up
+        device1.sendCommand("run:power up"),
+        print("Powering up the device:"),
+        # Let the attached device power up fully
+        time.sleep(3)
+        print("OK!")
+
+    # Print headers
+    print("\nRunning PAM test...\n")
+    print("Margining Results for 12V rail:\n")
+
+    # Loop through 6 different voltage levels, reducing by 200mV on each loop
+    testVoltage = 12000
+    i = 0
+    for i in range(6):
+        # Set the new voltage level
+        device1.sendCommand("Sig:12V:Volt " + str(testVoltage))
+
+        # Wait for the voltage rails to settle at the new level
+        time.sleep(1)
+
+        # Request and print(the voltage and current measurements
+        print(device1.sendCommand("Measure:Voltage 12V?") + " = " + device1.sendCommand("Measure:Current 12V?"))
+
+        # Decreasing the testVoltage by 200mv
+        testVoltage -= 200
+
+    # Set the 12v level aback to default
+    print("\nSetting the 12V back to default state.\n")
+    device1.sendCommand("Sig:12V:Volt 12000")
+
+    # Print headers
+    print("Margining Results for 5V rail:\n")
+
+    # Loop through 6 different voltage levels, reducing by 200mV on each loop
+    testVoltage = 5000
+    i = 0
+    for i in range(6):
+        # Set the new voltage level
+        device1.sendCommand("Sig:5V:Volt " + str(testVoltage))
+        # Wait for the voltage rails to settle at the new level
+        time.sleep(1)
+        # Request and print(the voltage and current measurements
+        print(device1.sendCommand("Measure:Voltage 5V?") + " = " + device1.sendCommand("Measure:Current 5V?"))
+        # Decreasing the testVoltage by 200mv
+        testVoltage -= 200
+
+    print("\nSetting the 5V back to default state.\n")
+    device1.sendCommand("Sig:5V:Volt 5000")
+
+    print("Test finished!")
 if __name__== "__main__":
  main()
