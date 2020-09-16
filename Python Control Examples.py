@@ -369,7 +369,7 @@ def PAMTest(device1):
     print("State of the Device: " + (currentState))
 
     # If the outputs are off
-    if currentState == "OFF":
+    if currentState == "PULLED":
         # Power up
         device1.sendCommand("run:power up"),
         print("Powering up the device:"),
@@ -377,48 +377,8 @@ def PAMTest(device1):
         time.sleep(3)
         print("OK!")
 
-    # Print headers
-    print("\nRunning PAM test...\n")
-    print("Margining Results for 12V rail:\n")
-
-    # Loop through 6 different voltage levels, reducing by 200mV on each loop
-    testVoltage = 12000
-    i = 0
-    for i in range(6):
-        # Set the new voltage level
-        device1.sendCommand("Sig:12V:Volt " + str(testVoltage))
-
-        # Wait for the voltage rails to settle at the new level
-        time.sleep(1)
-
-        # Request and print(the voltage and current measurements
-        print(device1.sendCommand("Measure:Voltage 12V?") + " = " + device1.sendCommand("Measure:Current 12V?"))
-
-        # Decreasing the testVoltage by 200mv
-        testVoltage -= 200
-
-    # Set the 12v level aback to default
-    print("\nSetting the 12V back to default state.\n")
-    device1.sendCommand("Sig:12V:Volt 12000")
-
-    # Print headers
-    print("Margining Results for 5V rail:\n")
-
-    # Loop through 6 different voltage levels, reducing by 200mV on each loop
-    testVoltage = 5000
-    i = 0
-    for i in range(6):
-        # Set the new voltage level
-        device1.sendCommand("Sig:5V:Volt " + str(testVoltage))
-        # Wait for the voltage rails to settle at the new level
-        time.sleep(1)
-        # Request and print(the voltage and current measurements
-        print(device1.sendCommand("Measure:Voltage 5V?") + " = " + device1.sendCommand("Measure:Current 5V?"))
-        # Decreasing the testVoltage by 200mv
-        testVoltage -= 200
-
-    print("\nSetting the 5V back to default state.\n")
-    device1.sendCommand("Sig:5V:Volt 5000")
+    #Display all power data + digital signals for the fixture attached
+    print(device1.sendCommand("measure:outputs?"))
 
     print("Test finished!")
 if __name__== "__main__":
