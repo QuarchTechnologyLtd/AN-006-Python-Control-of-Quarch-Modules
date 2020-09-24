@@ -32,9 +32,10 @@ import sys
 Simple example code, showing connection and control of almost any module
 '''
 def main():
+    #Main Loop
     while True:
 
-        #Scan for quarch devices on the system
+        #Scan for quarch devices over all connection types
         deviceList = scanDevices('all')
 
         # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
@@ -44,17 +45,20 @@ def main():
         if moduleStr is "quit":
             return 0
 
+        #If you know the name of the module you would like to talk to then you can skip module selection and hardcode the string.
+        #moduleStr = "USB:QTL1999-05-005"
+
         # Create a device using the module connection string
         myDevice = quarchDevice(moduleStr)
 
+        #Check if the module selected is attached to an array controller a QTL1461 or QTL1079
         if moduleStr.__contains__("<") and moduleStr.__contains__(">"):
             portNumber = int(moduleStr[moduleStr.find("<") + 1: moduleStr.find(">")])
             myDevice = quarchArray(myDevice).getSubDevice(portNumber)
 
-        '''
-        Several test functions are available, depending on the module you have chosen to work with
-        QuarchSimpleIdentify will work with any module.
-        '''
+
+        #Several test functions are available, depending on the module you have chosen to work with
+        #QuarchSimpleIdentify will work with any module.
         selectTests(myDevice)
 
         # Close the module before exiting the script
@@ -63,7 +67,7 @@ def main():
 def selectTests(myDevice):
     #Create a list of test that can be selected
     listOfTests = ["QuarchSimpleIdentify", "QuarchArrayExample", "QuarchHotPlugExample", "QuarchSwitchExample", "QuarchPowerMarginingExample", "PAMTest"]
-    #Pass the list to QuarchPys listSelection function.
+    #Pass the list to QuarchPy's listSelection function.
     testSelectList = user_interface.listSelection(message="Enter the number for the test you would like to run",selectionList=listOfTests, nice = True, tableHeaders=["Test Name"], indexReq=True, align="l")
 
     #Identify what test has been selected and run it
@@ -94,11 +98,9 @@ def QuarchSimpleIdentify(device1):
     print("\nModule Identity Information:\n")
     print(device1.sendCommand("*idn?"))
 
-    #print("\nSending reset command:\n") # sb db testing
-    #print(device1.sendCommand("*RST"))
 
 ''' 
-This function demonstrates simple control over modules that are attached via an Array Controller.  This will require you to connect to
+This function demonstrates simple control over modules that are attached via an Array Controller. This will require you to connect to
 a QTL1461 or QTL1079 Array Controller, with a module attached on port 1
 '''
 def QuarchArrayExample(device1):
