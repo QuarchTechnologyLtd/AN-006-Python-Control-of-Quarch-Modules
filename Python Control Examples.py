@@ -36,7 +36,7 @@ def main():
     while True:
 
         #Scan for quarch devices over all connection types
-        deviceList = scanDevices('all')
+        deviceList = scanDevices('all', favouriteOnly=False)
 
         # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
         # Here we use the user selection function to display the list and return the module connection string
@@ -66,7 +66,7 @@ def main():
 
 def selectTests(myDevice):
     #Create a list of test that can be selected
-    listOfTests = ["QuarchSimpleIdentify", "QuarchArrayExample", "QuarchHotPlugExample", "QuarchSwitchExample", "QuarchPowerMarginingExample", "PAMTest"]
+    listOfTests = ["QuarchSimpleIdentify", "QuarchArrayExample", "QuarchHotPlugExample", "QuarchSwitchExample", "QuarchPowerMarginingExample", "PowerTest"]
     #Pass the list to QuarchPy's listSelection function.
     testSelectList = user_interface.listSelection(message="Enter the number for the test you would like to run",selectionList=listOfTests, nice = True, tableHeaders=["Test Name"], indexReq=True, align="l")
 
@@ -81,8 +81,8 @@ def selectTests(myDevice):
         QuarchSwitchExample(myDevice)  # 4 Example for a physical layer switch
     elif testSelectList == "QuarchPowerMarginingExample":
         QuarchPowerMarginingExample(myDevice)  # 5 Example for a PPM
-    elif testSelectList == "PAMTest":
-        PAMTest(myDevice)  # 5 Example for a PPM
+    elif testSelectList == "PowerTest":
+        PowerTest(myDevice)  # 5 Example for any power module PAM or PPM
 
 
 '''
@@ -173,9 +173,11 @@ def QuarchHotPlugExample(device1):
     if isPulled == "PULLED":
         print("Device is PULLED. Plugging the device...")
         device1.sendCommand("run:power up")
-        for i in xrange(30):
+        i=0
+        while i<30:
             time.sleep(1)
             print ('Waiting {0}/30 seconds for power up to complete.\r'.format(i)),
+            i+=1
         print ("\n")
 
     #Creating a loop for Hot-Plug cycle
@@ -358,7 +360,7 @@ def QuarchPowerMarginingExample(device1):
 
     print("Test finished!")
 
-def PAMTest(device1):
+def PowerTest(device1):
     print("Running the PAM Test example.\n")
 
     # Prints out the ID of the attached module.
