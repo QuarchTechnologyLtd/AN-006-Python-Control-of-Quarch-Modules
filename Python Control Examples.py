@@ -373,17 +373,25 @@ def PowerTest(device1):
     print("State of the Device: " + (currentState))
 
     # If the outputs are off
-    if currentState == "PULLED":
+    if currentState.lower() == "pulled" or currentState.lower() == "off":
         # Power up
-        device1.sendCommand("run:power up"),
-        print("Powering up the device:"),
+        print("Powering up the device:")
+        retVal = device1.sendCommand("run:power up")
+        if "CONF:OUT:MODE " in retVal:
+            # Set the 5V channel and 12V channel to 5000mV and 12000mV to ensure that they are at the right level.
+            print("Setting PPM into default voltage state.\n")
+            device1.sendCommand("Sig:5v:Volt 5000")
+            device1.sendCommand("Sig:12v:Volt 12000")
+            device1.sendCommand("CONF:OUT:MODE 5v")
+            retVal = device1.sendCommand("run:power up")
+        print(retVal)
+
         # Let the attached device power up fully
         time.sleep(3)
-        print("OK!")
 
     #Display all power data + digital signals for the fixture attached
     print(device1.sendCommand("measure:outputs?"))
 
     print("Test finished!")
 if __name__== "__main__":
- main()
+    main()
