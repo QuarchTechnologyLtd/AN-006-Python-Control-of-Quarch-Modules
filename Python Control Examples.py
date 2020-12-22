@@ -12,9 +12,8 @@ This application note was written to be used in conjunction with QuarchPy python
 ########### INSTRUCTIONS ###########
 
 1- Connect a Quarch module to your PC via USB, Serial or LAN
-2- Comment in one of the 'module = ' lines below, based on the USB/Serial/LAN option you are using
-3- Alter the 'module = ' line to specify the correct port/module/IP
-4- Select the tests you would like to run from the prompt in the command line
+2- Either select the module in the module selection dialogue or comment in the 'module = ' line below, based on the USB/Serial/LAN option you are using
+3- Select the tests you would like to run from the prompt in the command line
 
 ####################################
 '''
