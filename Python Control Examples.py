@@ -4,10 +4,11 @@ This application note was written to be used in conjunction with QuarchPy python
 
 ########### VERSION HISTORY ###########
 
-29/03/2018 - Andy Norrie    - Minor edits for formatting and layout
-21/03/2018 - Pedro Cruz     - Re-written against quarchpy 1.0
 19/09/2017 - Tom Pope       - Moved to QuarchPy library
+21/03/2018 - Pedro Cruz     - Re-written against quarchpy 1.0
+29/03/2018 - Andy Norrie    - Minor edits for formatting and layout
 24/04/2018 - Andy Norrie    - Updated from functional to object form
+12/05/2021 - Matt Holsey    - Fixed power margining bug - 3v3 vs 5v rail
 
 ########### INSTRUCTIONS ###########
 
@@ -292,11 +293,19 @@ def QuarchPowerMarginingExample(device1):
     print("Module attached:"),
     print(device1.sendCommand("hello?") + "\n")
 
+    # Checking output mode of device
+    print("Module output mode:")
+    out_mode = device1.sendCommand("conf:out:mode?")
+    print(str(out_mode))
+
+    testVoltage2 = 5000
+    if "3v3" in str(out_mode).lower():
+        testVoltage2 = 3300
+
     #Set the 5V channel and 12V channel to 5000mV and 12000mV to ensure that they are at the right level.
     print ("Setting PPM into default voltage state.\n")
-    device1.sendCommand("Sig:5v:Volt 5000")
+    device1.sendCommand("Sig:{0}:Volt {1}".format(out_mode, str(testVoltage2)))
     device1.sendCommand("Sig:12v:Volt 12000")
-    device1.sendCommand("CONF:OUT:MODE 5v")
 
     #Check the state of the module and power up if necessary.
     print("Checking the State of the Device and power up if necessary.")
@@ -338,24 +347,26 @@ def QuarchPowerMarginingExample(device1):
     device1.sendCommand("Sig:12V:Volt 12000")
 
     # Print headers
-    print("Margining Results for 5V rail:\n")
+    print("Margining Results for {0} rail:\n".format(out_mode))
 
     # Loop through 6 different voltage levels, reducing by 200mV on each loop
-    testVoltage = 5000
     i = 0
     for i in range (6):
 
         # Set the new voltage level
-        device1.sendCommand("Sig:5V:Volt " + str(testVoltage))
+        device1.sendCommand("Sig:{0}:Volt {1}".format(out_mode, str(testVoltage2)))
         # Wait for the voltage rails to settle at the new level
         time.sleep(1)
         # Request and print(the voltage and current measurements
-        print(   device1.sendCommand("Measure:Voltage 5V?")+  " = "  + device1.sendCommand("Measure:Current 5V?"))
-        # Decreasing the testVoltage by 200mv
-        testVoltage -= 200
+        print(device1.sendCommand("Measure:Voltage {0}?".format(out_mode)) +
+              " = "  + device1.sendCommand("Measure:Current " + out_mode + "?"))
 
-    print("\nSetting the 5V back to default state.\n")
-    device1.sendCommand("Sig:5V:Volt 5000")
+        # Decreasing the testVoltage by 200mv
+        testVoltage2 -= 200
+
+    # Resetting rail back to original state.
+    print("\nSetting the {0} back to default state.\n".format(out_mode))
+    device1.sendCommand("Sig:{0}:Volt {1}".format(out_mode, "3300" if out_mode == "3v3" else "5000" ))
 
     print("Test finished!")
 
