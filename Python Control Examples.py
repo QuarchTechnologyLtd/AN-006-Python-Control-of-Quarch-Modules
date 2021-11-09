@@ -19,14 +19,12 @@ This application note was written to be used in conjunction with QuarchPy python
 ####################################
 '''
 
+# Import other libraries used in the examples
+import time
+
 # '.device' provides connection and control of modules
 from quarchpy.device import *
 from quarchpy.user_interface import user_interface
-
-# Import other libraries used in the examples
-import time
-import sys
-
 
 ''' 
 Simple example code, showing connection and control of almost any module
@@ -42,14 +40,14 @@ def main():
         # Here we use the user selection function to display the list and return the module connection string
         # for the selected device
         moduleStr = userSelectDevice(deviceList,additionalOptions = ["Rescan","All Conn Types","Quit"], nice=True)
-        if moduleStr is "quit":
+        if moduleStr == "quit":
             return 0
 
         #If you know the name of the module you would like to talk to then you can skip module selection and hardcode the string.
         #moduleStr = "USB:QTL1999-05-005"
 
         # Create a device using the module connection string
-        myDevice = quarchDevice(moduleStr)
+        myDevice = getQuarchDevice(moduleStr)
 
         #Check if the module selected is attached to an array controller a QTL1461 or QTL1079
         if moduleStr.__contains__("<") and moduleStr.__contains__(">"):
