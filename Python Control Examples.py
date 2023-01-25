@@ -334,9 +334,14 @@ def QuarchPowerMarginingExample(device1):
     out_mode = device1.sendCommand("conf:out:mode?")
     print(str(out_mode))
 
+    # Check the mode the PPM is on, and set the appropriate test voltage
     testVoltage2 = 5000
     if "3v3" in str(out_mode).lower():
-        testVoltage2 = 3300
+        testVoltage2 = 3300        
+    elif "disabled" in str(out_mode).lower():
+    # If outputs are disabled (no fixture detected) default to 3v3 for this example
+        print ("Setting output mode to 3v3: " + str(device1.sendCommand("conf:out:mode 3v3")))        
+        
 
     #Set the 5V channel and 12V channel to 5000mV and 12000mV to ensure that they are at the right level.
     print ("Setting PPM into default voltage state.\n")
@@ -351,9 +356,10 @@ def QuarchPowerMarginingExample(device1):
     # If the outputs are off
     if currentState =="OFF":
         # Power up
-        device1.sendCommand("run:power up"),
-        print("Powering up the device:"),
+        cmdResult = device1.sendCommand("run:power up"),
+        print("Powering up the device: " + str(cmdResult)),
         # Let the attached device power up fully
+        print ("Waiting for device to power up...")
         time.sleep(3)
         print ("OK!")
 
