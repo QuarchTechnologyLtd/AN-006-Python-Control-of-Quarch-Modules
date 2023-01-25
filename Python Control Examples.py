@@ -1,6 +1,10 @@
 '''
-AN-006 - Application note demonstrating python control of quarch modules
-This application note was written to be used in conjunction with QuarchPy python package and Quarch modules.
+AN-006 - Application note demonstrating simple python automation of quarch modules
+
+This uses the quarchpy python package and demonstrates
+- Scanning for modules
+- Connecting to a module
+- Sending commands and using responses
 
 ########### VERSION HISTORY ###########
 
@@ -9,82 +13,113 @@ This application note was written to be used in conjunction with QuarchPy python
 29/03/2018 - Andy Norrie    - Minor edits for formatting and layout
 24/04/2018 - Andy Norrie    - Updated from functional to object form
 12/05/2021 - Matt Holsey    - Fixed power margining bug - 3v3 vs 5v rail
+25/01/2023 - Andy Norrie    - Reviewed code and updated requirements and instructions
+
+########### REQUIREMENTS ###########
+
+1- Python (3.x recommended)
+    https://www.python.org/downloads/
+2- Quarchpy python package
+    https://quarch.com/products/quarchpy-python-package/
+3- Quarch USB driver (Required for USB connected devices on windows only)
+    https://quarch.com/downloads/driver/
+4- Check USB permissions if using Linux:
+    https://quarch.com/support/faqs/usb/
 
 ########### INSTRUCTIONS ###########
 
-1- Connect a Quarch module to your PC via USB, Serial or LAN
-2- Either select the module in the module selection dialogue or comment in the 'module = ' line below, based on the USB/Serial/LAN option you are using
-3- Select the tests you would like to run from the prompt in the command line
+1- Install the required items above
+2- Connect a Quarch module to your PC via USB, Serial or LAN and power it on
+2- Run the script and follow the instructions on screen
 
 ####################################
 '''
 
 # Import other libraries used in the examples
-import time
+import time     # Used for sleep commands
+import logging  # Optionally used to create a log to help with debugging
 
 # '.device' provides connection and control of modules
 from quarchpy.device import *
 from quarchpy.user_interface import user_interface
 
 ''' 
-Simple example code, showing connection and control of almost any module
+Simple example code, showing connection and control of almost any module.
+Different fumctions are provided for each major range of quarch products.  
+QuarchSimpleIdentify() will work with any device while others are provided
+which are specific to a given product range
 '''
 def main():
-    #Main Loop
-    while True:
 
-        #Scan for quarch devices over all connection types
-        deviceList = scanDevices('all', favouriteOnly=False)
+    # If required you can enable python logging, quarchpy supports this and your log file
+    # will show the process of scanning devices and sending the commands.  Just comment out
+    # the line below.  This can be useful to send to quarch if you encounter errors
+    # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+    
+    print ("Quarch application note example: AN-006")
+    print ("---------------------------------------\n\n")
 
-        # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
-        # Here we use the user selection function to display the list and return the module connection string
-        # for the selected device
-        moduleStr = userSelectDevice(deviceList,additionalOptions = ["Rescan","All Conn Types","Quit"], nice=True)
-        if moduleStr == "quit":
-            return 0
+    # Scan for quarch devices over all connection types (USB, Serial and LAN)
+    print ("Scanning for devices...\n")
+    deviceList = scanDevices('all', favouriteOnly=False)
 
-        #If you know the name of the module you would like to talk to then you can skip module selection and hardcode the string.
-        #moduleStr = "USB:QTL1999-05-005"
+    # You can work with the deviceList dictionary yourself, or use the inbuilt 'selector' functions to help
+    # Here we use the user selection function to display the list on screen and return the module connection string
+    # for the selected device
+    moduleStr = userSelectDevice(deviceList,additionalOptions = ["Rescan","All Conn Types","Quit"], nice=True)
+    if moduleStr == "quit":
+        return 0
 
-        # Create a device using the module connection string
-        myDevice = getQuarchDevice(moduleStr)
+    # If you know the name of the module you would like to talk to then you can skip module selection and hardcode the string.
+    #moduleStr = "USB:QTL1999-05-005"
 
-        #Check if the module selected is attached to an array controller a QTL1461 or QTL1079
-        if moduleStr.__contains__("<") and moduleStr.__contains__(">"):
-            portNumber = int(moduleStr[moduleStr.find("<") + 1: moduleStr.find(">")])
-            myDevice = quarchArray(myDevice).getSubDevice(portNumber)
+    # Create a device using the module connection string
+    print("\n\nConnecting to the selected device")
+    myDevice = getQuarchDevice(moduleStr)
 
+    # Check if the module selected is attached to an array controller a QTL1461 or QTL1079
+    # This is a special case and only required if you are connecting as a sub-device of an ArrayController
+    # This is a more advanced feature and can be ignored by most users, it is here to handle a new feature of 
+    # userSelectDevice() and will be improved soon!
+    if moduleStr.__contains__("<") and moduleStr.__contains__(">"):
+        portNumber = int(moduleStr[moduleStr.find("<") + 1: moduleStr.find(">")])
+        myDevice = quarchArray(myDevice).getSubDevice(portNumber)
 
-        #Several test functions are available, depending on the module you have chosen to work with
-        #QuarchSimpleIdentify will work with any module.
-        selectTests(myDevice)
+    #Several test functions are available, depending on the module you have chosen to work with
+    #QuarchSimpleIdentify will work with any module.
+    selectTests(myDevice)
 
-        # Close the module before exiting the script
-        myDevice.closeConnection()
+    # Close the module before we go round the loop to try another test
+    # The module should always be closed when you are finished using it
+    myDevice.closeConnection()
 
+''' 
+Simple function to display a list of test functions to the user and allow them to select the one to run
+'''
 def selectTests(myDevice):
-    #Create a list of test that can be selected
+    # Create a list of test that can be selected
     listOfTests = ["QuarchSimpleIdentify", "QuarchArrayExample", "QuarchHotPlugExample", "QuarchSwitchExample", "QuarchPowerMarginingExample", "PowerTest"]
-    #Pass the list to QuarchPy's listSelection function.
+    # Pass the list to QuarchPy's listSelection function.
     testSelectList = user_interface.listSelection(message="Enter the number for the test you would like to run",selectionList=listOfTests, nice = True, tableHeaders=["Test Name"], indexReq=True, align="l")
 
-    #Identify what test has been selected and run it
+    # Identify what test has been selected and run it
     if testSelectList == "QuarchSimpleIdentify":
-        QuarchSimpleIdentify(myDevice)  # 1
+        QuarchSimpleIdentify(myDevice)          # 1 Example that works with any module
     elif testSelectList == "QuarchArrayExample":
-        QuarchArrayExample(myDevice)  # 2 Example for use with an Array Controller
+        QuarchArrayExample(myDevice)            # 2 Example for use with an Array Controller
     elif testSelectList == "QuarchHotPlugExample":
-        QuarchHotPlugExample(myDevice)  # 3 Example for use with a hot-plug/breaker module
+        QuarchHotPlugExample(myDevice)          # 3 Example for use with a hot-plug/breaker module
     elif testSelectList == "QuarchSwitchExample":
-        QuarchSwitchExample(myDevice)  # 4 Example for a physical layer switch
+        QuarchSwitchExample(myDevice)           # 4 Example for a physical layer switch
     elif testSelectList == "QuarchPowerMarginingExample":
-        QuarchPowerMarginingExample(myDevice)  # 5 Example for a PPM
+        QuarchPowerMarginingExample(myDevice)   # 5 Example for a PPM
     elif testSelectList == "PowerTest":
-        PowerTest(myDevice)  # 5 Example for any power module PAM or PPM
+        PowerTest(myDevice)                     # 6 Example for any power module PAM or PPM
 
 
 '''
 This function demonstrates a very simple module identify, that will work with any Quarch device
+We send the command and print the response to the terminal
 '''
 def QuarchSimpleIdentify(device1):
     # Print the module name
@@ -99,7 +134,7 @@ def QuarchSimpleIdentify(device1):
 
 ''' 
 This function demonstrates simple control over modules that are attached via an Array Controller. This will require you to connect to
-a QTL1461 or QTL1079 Array Controller, with a module attached on port 1
+a QTL1461 or QTL1079 Array Controller, with a module attached on port '1'
 '''
 def QuarchArrayExample(device1):
 
@@ -107,14 +142,17 @@ def QuarchArrayExample(device1):
     First we will use simple commands to the controller.  This requires us to append the device number of the module
     we want to speak with on the end of every command
     '''
-    # Print the controller name
+    # Print the controller name (these commands run on the ArrayController which we are connected to)
     print("Running the array identify test.")
     print("")
     print("Controller Name:")
     print(device1.sendCommand("hello?"))
     print("")
 
-    # Try to talk to the module on port 1
+    # Try to talk to the module on port 1.  The <> address allows you to send a command to a module
+    # on a specific port.  This allows you to control different devices easily.  It is possible to send 
+    # commands to more than one device at a time, see the Array Controller manual for more details
+    # on complex address lists
     print("Communicate with module on port 1")
     devStatus = device1.sendCommand("*idn? <1>")
     if "FAIL" in devStatus:
