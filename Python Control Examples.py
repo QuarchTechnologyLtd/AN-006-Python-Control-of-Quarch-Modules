@@ -77,14 +77,6 @@ def main():
     print("\n\nConnecting to the selected device")
     myDevice = getQuarchDevice(moduleStr)
 
-    # Check if the module selected is attached to an array controller a QTL1461 or QTL1079
-    # This is a special case and only required if you are connecting as a sub-device of an ArrayController
-    # This is a more advanced feature and can be ignored by most users, it is here to handle a new feature of 
-    # userSelectDevice() and will be improved soon!
-    if moduleStr.__contains__("<") and moduleStr.__contains__(">"):
-        portNumber = int(moduleStr[moduleStr.find("<") + 1: moduleStr.find(">")])
-        myDevice = quarchArray(myDevice).getSubDevice(portNumber)
-
     #Several test functions are available, depending on the module you have chosen to work with
     #QuarchSimpleIdentify will work with any module.
     selectTests(myDevice)
