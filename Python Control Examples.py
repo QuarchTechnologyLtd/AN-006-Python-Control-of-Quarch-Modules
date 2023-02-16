@@ -79,11 +79,12 @@ def main():
 
     #Several test functions are available, depending on the module you have chosen to work with
     #QuarchSimpleIdentify will work with any module.
-    selectTests(myDevice)
-
-    # Close the module before we go round the loop to try another test
-    # The module should always be closed when you are finished using it
-    myDevice.closeConnection()
+    try:
+        selectTests(myDevice)
+    finally:
+        # Close the module before we go round the loop to try another test
+        # The module should always be closed when you are finished using it
+        myDevice.closeConnection()
 
 ''' 
 Simple function to display a list of test functions to the user and allow them to select the one to run
@@ -202,10 +203,8 @@ def QuarchHotPlugExample(device1):
         print("Device is PULLED. Plugging the device...")
         device1.sendCommand("run:power up")
         i=0
-        while i<30:
-            time.sleep(1)
-            print ('Waiting {0}/30 seconds for power up to complete.\r'.format(i)),
-            i+=1
+        print("waiting 3 seconds for power up")
+        time.sleep(3)
         print ("\n")
 
     #Creating a loop for Hot-Plug cycle
@@ -247,7 +246,11 @@ def QuarchSwitchExample(device1):
     time.sleep(0.1) # Makes sure the last command had time to be executed.
     # Checks the current delay
     switchDelay = device1.sendCommand("CONFig:MUX Delay?")
-    switchDelay = float(switchDelay)
+    try:
+        switchDelay = float(switchDelay)
+    except Exception as e:
+        print("")
+
     print("Current current delay is: " + str(switchDelay) + " seconds." +"\n")
     
     # Adds a delay if none. 
@@ -278,7 +281,7 @@ def QuarchSwitchExample(device1):
 
     #Set a delay of double the existing delay.
     print("")
-    print("Running the test with new delay:"),
+    print("Running the test with new delay:"+str(int(newDelay))),
     command = "CONFig:MUX:DELay " + str(int(newDelay))
     print(device1.sendCommand( command))
     print("")
@@ -304,7 +307,7 @@ def QuarchSwitchExample(device1):
 
     #Set the switch back to initial delay we had at the start
     print("")
-    print("Changing the delay back to the previous settings:"),
+    print("Changing the delay back to the previous settings: "+ str(int(switchDelay)))
     command = "CONFig:MUX:DELay " + str(int(switchDelay))
     print(device1.sendCommand( command))
 
@@ -323,14 +326,14 @@ def QuarchPowerMarginingExample(device1):
 
     # Checking output mode of device
     print("Module output mode:")
-    out_mode = device1.sendCommand("conf:out:mode?")
-    print(str(out_mode))
+    out_mode = device1.sendCommand("conf:out:mode?").lower()
+    print(out_mode)
 
     # Check the mode the PPM is on, and set the appropriate test voltage
     testVoltage2 = 5000
-    if "3v3" in str(out_mode).lower():
+    if "3v3" in out_mode:
         testVoltage2 = 3300        
-    elif "disabled" in str(out_mode).lower():
+    elif "disabled" in out_mode:
     # If outputs are disabled (no fixture detected) default to 3v3 for this example
         print ("Setting output mode to 3v3: " + str(device1.sendCommand("conf:out:mode 3v3")))        
         
@@ -405,7 +408,7 @@ def QuarchPowerMarginingExample(device1):
     print("Test finished!")
 
 def PowerTest(device1):
-    print("Running the PAM Test example.\n")
+    print("Running the Power Test example.\n")
 
     # Prints out the ID of the attached module.
     print("Module attached:"),
@@ -413,29 +416,40 @@ def PowerTest(device1):
 
     # Check the state of the module and power up if necessary.
     print("Checking the State of the Device and power up if necessary.")
-    currentState = device1.sendCommand("run:power?")
-    print("State of the Device: " + (currentState))
-
-    # If the outputs are off
-    if currentState.lower() == "pulled" or currentState.lower() == "off":
-        # Power up
-        print("Powering up the device:")
-        retVal = device1.sendCommand("run:power up")
-        if "CONF:OUT:MODE " in retVal:
-            # Set the 5V channel and 12V channel to 5000mV and 12000mV to ensure that they are at the right level.
-            print("Setting PPM into default voltage state.\n")
-            device1.sendCommand("Sig:5v:Volt 5000")
-            device1.sendCommand("Sig:12v:Volt 12000")
-            device1.sendCommand("CONF:OUT:MODE 5v")
-            retVal = device1.sendCommand("run:power up")
-        print(retVal)
-
-        # Let the attached device power up fully
-        time.sleep(3)
+    setupPowerOutput(device1)
+    print("waiting 3 seconds for power up") # Let the attached device power up fully
+    time.sleep(3)
 
     #Display all power data + digital signals for the fixture attached
     print(device1.sendCommand("measure:outputs?"))
 
     print("Test finished!")
+
+
+'''
+Simple function to check the output mode of the power module, setting it to 3v3 if required
+then enabling the outputs if not already done.  This will result in the module being turned on
+and supplying power
+'''
+def setupPowerOutput(myModule):
+    # Output mode is set automatically on HD modules using an HD fixture, otherwise we will chose 5V mode for this example
+    outModeStr = myModule.sendCommand("config:output Mode?")
+    if "DISABLED" in outModeStr:
+        try:
+            drive_voltage = raw_input(
+                "\n Either using an HD without an intelligent fixture or an XLC.\n \n>>> Please select a voltage [3V3, 5V]: ") or "3V3" or "5V"
+        except NameError:
+            drive_voltage = input(
+                "\n Either using an HD without an intelligent fixture or an XLC.\n \n>>> Please select a voltage [3V3, 5V]: ") or "3V3" or "5V"
+
+        myModule.sendCommand("config:output:mode:" + drive_voltage)
+
+    # Check the state of the module and power up if necessary
+    powerState = myModule.sendCommand("run power?")
+    # If outputs are off
+    if "OFF" in powerState or "PULLED" in powerState:  # PULLED comes from PAM
+        # Power Up
+        print("\n Turning the outputs on:"), myModule.sendCommand("run:power up"), "!"
+
 if __name__== "__main__":
     main()
