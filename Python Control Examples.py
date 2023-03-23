@@ -30,7 +30,7 @@ This uses the quarchpy python package and demonstrates
 
 1- Install the required items above
 2- Connect a Quarch module to your PC via USB, Serial or LAN and power it on
-2- Run the script and follow the instructions on screen
+3- Run the script and follow the instructions on screen
 
 ####################################
 '''
